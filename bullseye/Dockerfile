@@ -6,7 +6,7 @@
 
 FROM cm2network/steamcmd:root as build_stage
 
-LABEL maintainer="joedwards32@gmail.com"
+LABEL maintainer="joni@sjostedt.fi"
 
 ENV STEAMUSER "changeme"
 ENV STEAMPASS "changeme"
@@ -14,7 +14,6 @@ ENV STEAMGUARD ""
 ENV STEAMAPPID 730
 ENV STEAMAPP cs2
 ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
-ENV CFG_URL https://raw.githubusercontent.com/joedwards32/CS2/settings.tgz
 
 COPY etc/entry.sh "${HOMEDIR}/entry.sh"
 COPY etc/server.cfg "/etc/server.cfg"
@@ -26,7 +25,7 @@ RUN set -x \
 		wget \
 		ca-certificates \
 		lib32z1 \
-                simpleproxy \
+                libicu-dev \
 	&& mkdir -p "${STEAMAPPDIR}" \
 	# Add entry script
 	&& chmod +x "${HOMEDIR}/entry.sh" \
