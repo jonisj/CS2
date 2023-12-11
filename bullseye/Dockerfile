@@ -8,15 +8,14 @@ FROM cm2network/steamcmd:root as build_stage
 
 LABEL maintainer="joni@sjostedt.fi"
 
-ENV STEAMUSER "changeme"
-ENV STEAMPASS "changeme"
-ENV STEAMGUARD ""
 ENV STEAMAPPID 730
 ENV STEAMAPP cs2
 ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
 
 COPY etc/entry.sh "${HOMEDIR}/entry.sh"
 COPY etc/server.cfg "/etc/server.cfg"
+COPY etc/pre.sh "/etc/pre.sh"
+COPY etc/post.sh "/etc/post.sh"
 
 RUN set -x \
 	# Install, update & upgrade packages
@@ -58,6 +57,8 @@ ENV CS2_SERVERNAME="cs2 private server" \
     TV_RELAY_PW="changeme" \
     TV_MAXRATE=0 \
     TV_DELAY=0 \
+    SRCDS_TOKEN="" \
+    CS2_CFG_URL="" \
     CS2_ADDITIONAL_ARGS=""
 
 # Set permissions on STEAMAPPDIR
