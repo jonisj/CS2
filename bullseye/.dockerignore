@@ -1,2 +1,3 @@
 hooks/
 cs2-server/
+docker-compose.yml
