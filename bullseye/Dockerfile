@@ -11,6 +11,7 @@ LABEL maintainer="joni@sjostedt.fi"
 ENV STEAMAPPID 730
 ENV STEAMAPP cs2
 ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
+ENV STEAMAPPVALIDATE 0
 
 COPY etc/entry.sh "${HOMEDIR}/entry.sh"
 COPY etc/server.cfg "/etc/server.cfg"
@@ -25,6 +26,7 @@ RUN set -x \
 		ca-certificates \
 		lib32z1 \
                 libicu-dev \
+                unzip \
 	&& mkdir -p "${STEAMAPPDIR}" \
 	# Add entry script
 	&& chmod +x "${HOMEDIR}/entry.sh" \
@@ -38,7 +40,9 @@ RUN set -x \
 FROM build_stage AS bullseye-base
 
 ENV CS2_SERVERNAME="cs2 private server" \
+    CS2_CHEATS=0 \
     CS2_IP=0.0.0.0 \
+    CS2_SERVER_HIBERNATE=0 \
     CS2_PORT=27015 \
     CS2_RCON_PORT="" \
     CS2_MAXPLAYERS=10 \
@@ -59,6 +63,10 @@ ENV CS2_SERVERNAME="cs2 private server" \
     TV_DELAY=0 \
     SRCDS_TOKEN="" \
     CS2_CFG_URL="" \
+    CS2_LOG="on" \
+    CS2_LOG_MONEY=0 \
+    CS2_LOG_DETAIL=0 \
+    CS2_LOG_ITEMS=0 \
     CS2_ADDITIONAL_ARGS=""
 
 # Set permissions on STEAMAPPDIR
