@@ -5,9 +5,15 @@ mkdir -p "${STEAMAPPDIR}" || true
 
 # Download Updates
 
-bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
+if [[ "$STEAMAPPVALIDATE" -eq 1 ]]; then
+    VALIDATE="validate"
+else
+    VALIDATE=""
+fi
+
+eval bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
 				+login anonymous \
-				+app_update "${STEAMAPPID}" \
+				+app_update "${STEAMAPPID}" "${VALIDATE}"\
 				+quit
 
 # steamclient.so fix
@@ -34,6 +40,8 @@ fi
 # Rewrite Config Files
 
 sed -i -e "s/{{SERVER_HOSTNAME}}/${CS2_SERVERNAME}/g" \
+       -e "s/{{SERVER_CHEATS}}/${CS2_CHEATS}/g" \
+       -e "s/{{SERVER_HIBERNATE}}/${CS2_SERVER_HIBERNATE}/g" \
        -e "s/{{SERVER_PW}}/${CS2_PW}/g" \
        -e "s/{{SERVER_RCON_PW}}/${CS2_RCONPW}/g" \
        -e "s/{{TV_ENABLE}}/${TV_ENABLE}/g" \
@@ -43,6 +51,10 @@ sed -i -e "s/{{SERVER_HOSTNAME}}/${CS2_SERVERNAME}/g" \
        -e "s/{{TV_RELAY_PW}}/${TV_RELAY_PW}/g" \
        -e "s/{{TV_MAXRATE}}/${TV_MAXRATE}/g" \
        -e "s/{{TV_DELAY}}/${TV_DELAY}/g" \
+       -e "s/{{SERVER_LOG}}/${CS2_LOG}/g" \
+       -e "s/{{SERVER_LOG_MONEY}}/${CS2_LOG_MONEY}/g" \
+       -e "s/{{SERVER_LOG_DETAIL}}/${CS2_LOG_DETAIL}/g" \
+       -e "s/{{SERVER_LOG_ITEMS}}/${CS2_LOG_ITEMS}/g" \
        "${STEAMAPPDIR}"/game/csgo/cfg/server.cfg
 
 if [[ ! -z $CS2_BOT_DIFFICULTY ]] ; then

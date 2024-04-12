@@ -13,14 +13,16 @@ This Docker image contains the dedicated server of the game.
 
 Running using Docker:
 ```console
-$ docker run -d --name=cs2 -e SRCDS_TOKEN={YOURTOKEN} -p 27015:27015/tcp -p 27015:27015/udp -p 27020:27020/tcp joedwards32/cs2
+$ SRCDS_TOKEN="..." # check https://steamcommunity.com/dev/managegameservers
+$ docker run -d --name=cs2 -e SRCDS_TOKEN="$SRCDS_TOKEN" -p 27015:27015/tcp -p 27015:27015/udp -p 27020:27020/udp joedwards32/cs2
 ```
 
 Running using a bind mount for data persistence on container recreation:
 ```console
 $ mkdir -p $(pwd)/cs2-data
-$ chmod 777 $(pwd)/cs2-data # Makes sure the directory is writeable by the unprivileged container user
-$ docker run -d --name=cs2 -e SRCDS_TOKEN={YOURTOKEN} -v $(pwd)/cs2-data:/home/steam/cs2-dedicated/ -p 27015:27015/tcp -p 27015:27015/udp -p 27020:27020/tcp joedwards32/cs2
+$ chown 1000:1000 $(pwd)/cs2-data # Makes sure the directory is writeable by the unprivileged container user with uid 1000, known as steam
+$ SRCDS_TOKEN="..." # check https://steamcommunity.com/dev/managegameservers
+$ docker run -d --name=cs2 -e SRCDS_TOKEN="$SRCDS_TOKEN" -v $(pwd)/cs2-data:/home/steam/cs2-dedicated/ -p 27015:27015/tcp -p 27015:27015/udp -p 27020:27020/udp joedwards32/cs2
 ```
 
 or using docker-compose, see [examples](https://github.com/joedwards32/CS2/blob/main/examples/docker-compose.yml):
@@ -51,6 +53,10 @@ Feel free to overwrite these environment variables, using -e (--env):
 ```dockerfile
 SRCDS_TOKEN=""              (Game Server Token from https://steamcommunity.com/dev/managegameservers)
 CS2_SERVERNAME="changeme"   (Set the visible name for your private server)
+CS2_CHEATS=0                (0 - disable cheats, 1 - enable cheats)
+CS2_SERVER_HIBERNATE=0      (Put server in a low CPU state when there are no players. 
+                             0 - hibernation disabled, 1 - hibernation enabled
+                             n.b. hibernation has been observed to trigger server crashes)
 CS2_IP=""                   (CS2 server listening IP address, 0.0.0.0 - all IP addresses on the local machine, empty - IP identified automatically)
 CS2_PORT=27015              (CS2 server listen port tcp_udp)
 CS2_RCON_PORT=""            (Optional, use a simple TCP proxy to have RCON listen on an alternative port.
@@ -95,7 +101,24 @@ TV_MAXRATE=0                (Max CSTV spectator bandwidth rate allowed, 0 == unl
 TV_DELAY=0                  (CSTV broadcast delay in seconds)
 ```
 
+### Logs
+
+```dockerfile
+CS2_LOG="on"                ('on'/'off')
+CS2_LOG_MONEY=0             (Turns money logging on/off: 0=off, 1=on)
+CS2_LOG_DETAIL=0            (Combat damage logging: 0=disabled, 1=enemy, 2=friendly, 3=all)
+CS2_LOG_ITEMS=0             (Turns item logging on/off: 0=off, 1=on)
+```
+
 # Customizing this Container
+
+## Validating Game Files
+
+If you break the game through your customisations and want steamcmd to validate and redownload then set the `STEAMAPPVALIDATE` environment variable to `1`:
+
+```dockerfile
+STEAMAPPVALIDATE=0          (0=skip validation, 1=validate game files)
+```
 
 ## Pre and Post Hooks
 
@@ -108,7 +131,7 @@ When using a persient volume mounted at `/home/steam/cs2-dedicated/` you may edi
 
 ## Overriding Game Mode Defaults
 
-The default configurations for each game mode are stored in `/home/steam/cs2-dedicated/csgo/cfg/`. For example, the Competitive mode defaults are set by `gamemode_competitive.cfg`.
+The default configurations for each game mode are stored in `/home/steam/cs2-dedicated/game/csgo/cfg/`. For example, the Competitive mode defaults are set by `gamemode_competitive.cfg`.
 
 When using a persistent volume mounted at `/home/steam/cs2-dedicated/`, these defaults can be overridden by adding your own settings to `gamemode_competitive_server.cfg`.
 
