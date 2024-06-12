@@ -17,6 +17,7 @@ COPY etc/entry.sh "${HOMEDIR}/entry.sh"
 COPY etc/server.cfg "/etc/server.cfg"
 COPY etc/pre.sh "/etc/pre.sh"
 COPY etc/post.sh "/etc/post.sh"
+COPY etc/update-gameinfo.sh "/etc/update-gameinfo.sh"
 
 RUN set -x \
 	# Install, update & upgrade packages

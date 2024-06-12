@@ -30,6 +30,9 @@ fi
 if [[ ! -f "${STEAMAPPDIR}/post.sh" ]] ; then
     cp /etc/post.sh "${STEAMAPPDIR}/post.sh"
 fi
+if [[ ! -f "${STEAMAPPDIR}/update-gameinfo.sh" ]] ; then
+    cp /etc/update-gameinfo.sh "${STEAMAPPDIR}/update-gameinfo.sh"
+fi
 
 # Download and extract custom config bundle
 if [[ ! -z $CS2_CFG_URL ]]; then
@@ -72,6 +75,9 @@ cd "${STEAMAPPDIR}/game/bin/linuxsteamrt64"
 
 # Pre Hook
 bash "${STEAMAPPDIR}/pre.sh"
+
+# Update gameinfo.gi
+bash "${STEAMAPPDIR}/update-gameinfo.sh"
 
 # Construct server arguments
 
