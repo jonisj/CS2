@@ -40,7 +40,7 @@ RUN set -x \
 
 # BASE
 
-FROM build_stage AS bullseye-base
+FROM build_stage AS bookworm-base
 
 ENV CS2_SERVERNAME="cs2 private server" \
     CS2_CHEATS=0 \

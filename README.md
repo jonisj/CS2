@@ -77,8 +77,8 @@ CS2_GAMEALIAS=""            (Game type, e.g. casual, competitive, deathmatch.
                              See https://developer.valvesoftware.com/wiki/Counter-Strike_2/Dedicated_Servers)
 CS2_GAMETYPE=0              (Used if CS2_GAMEALIAS not defined. See https://developer.valvesoftware.com/wiki/Counter-Strike_2/Dedicated_Servers)
 CS2_GAMEMODE=1              (Used if CS2_GAMEALIAS not defined. See https://developer.valvesoftware.com/wiki/Counter-Strike_2/Dedicated_Servers)
-CS2_MAPGROUP="mg_active"    (Map pool)
-CS2_STARTMAP="de_inferno"   (Start map)
+CS2_MAPGROUP="mg_active"    (Map pool. Ignored if workshop maps are defined.)
+CS2_STARTMAP="de_inferno"   (Start map. Ignored if workshop maps are defined.)
 ```
 
 ### Bots
@@ -110,6 +110,22 @@ CS2_LOG_DETAIL=0            (Combat damage logging: 0=disabled, 1=enemy, 2=frien
 CS2_LOG_ITEMS=0             (Turns item logging on/off: 0=off, 1=on)
 ```
 
+### Steam Workshop
+
+Support for Steam Workshop is experimental!
+
+```dockerfile
+CS2_HOST_WORKSHOP_MAP=""         (Steam Workshop Map ID to load on server start)   
+CS2_HOST_WORKSHOP_COLLECTION=""  (Steam Workshop Collection ID to download)
+```
+
+If a Workshop Collection is set, maps can be selected via rcon. E.g:
+
+```
+ds_workshop_listmaps
+ds_workshop_changelevel $map_name
+```
+
 # Customizing this Container
 
 ## Validating Game Files
@@ -128,6 +144,12 @@ The container includes two scripts for executing custom actions:
 * `/home/steam/cs2-dedicated/post.sh` is executed after the CS2 server stops
 
 When using a persient volume mounted at `/home/steam/cs2-dedicated/` you may edit these scripts to perform custom actions, such as enabling metamod.
+
+Alternatively, you may have docker mount files from outside the container to override these files. E.g.:
+
+```
+-v /path/to/pre.sh:/home/steam/cs2-dedicated/pre.sh
+```
 
 ## Overriding Game Mode Defaults
 
