@@ -4,7 +4,7 @@
 
 # BUILD STAGE
 
-FROM cm2network/steamcmd:root as build_stage
+FROM cm2network/steamcmd:root-bullseye as build_stage
 
 LABEL maintainer="joni@sjostedt.fi"
 
@@ -28,6 +28,8 @@ RUN set -x \
 		lib32z1 \
                 libicu-dev \
                 unzip \
+                default-libmysqlclient-dev \
+                libssl1.1 \
 	&& mkdir -p "${STEAMAPPDIR}" \
 	# Add entry script
 	&& chmod +x "${HOMEDIR}/entry.sh" \
