@@ -3,7 +3,7 @@
 # Gameinfo update script
 # https://github.com/ghostcap-gaming/ACMRS-cs2-metamod-update-fix/tree/main
 
-TARGET_DIR="/home/steam/cs2-dedicated/game/csgo"
+TARGET_DIR="${STEAMAPPDIR}/game/csgo"
 GAMEINFO_FILE="${TARGET_DIR}/gameinfo.gi"
 
 if [ ! -f "${GAMEINFO_FILE}" ]; then

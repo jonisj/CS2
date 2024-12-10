@@ -1,5 +1,3 @@
-[![Docker Image CI](https://github.com/joedwards32/CS2/actions/workflows/docker-image.yml/badge.svg?branch=main)](https://github.com/joedwards32/CS2/actions/workflows/docker-image.yml) [![Docker Build and Publish](https://github.com/joedwards32/CS2/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/joedwards32/CS2/actions/workflows/docker-publish.yml)
-
 # What is Counter-Strike 2?
 For over two decades, Counter-Strike has offered an elite competitive experience, one shaped by millions of players from across the globe. And now the next chapter in the CS story is about to begin. This is Counter-Strike 2. 
 This Docker image contains the dedicated server of the game.
@@ -14,7 +12,7 @@ This Docker image contains the dedicated server of the game.
 Running using Docker:
 ```console
 $ SRCDS_TOKEN="..." # check https://steamcommunity.com/dev/managegameservers
-$ docker run -d --name=cs2 -e SRCDS_TOKEN="$SRCDS_TOKEN" -p 27015:27015/tcp -p 27015:27015/udp -p 27020:27020/udp joedwards32/cs2
+$ docker run -d --name=cs2 -e SRCDS_TOKEN="$SRCDS_TOKEN" -p 27015:27015/tcp -p 27015:27015/udp -p 27020:27020/udp jonisj/cs2
 ```
 
 Running using a bind mount for data persistence on container recreation:
@@ -170,9 +168,6 @@ The container can be instructed to download a extract a Tar Gzip of configuratio
 ```dockerfile
 CS2_CFG_URL=""          (HTTP/HTTPS URL to fetch a Tar Gzip bundle of configuration files/mods)
 ```
-
-See [examples](https://github.com/joedwards32/CS2/blob/main/examples/cs2.cfg.tgz) for a correctly formatted Tar Gzip customisation bundle.
-
 
 # Credits
 

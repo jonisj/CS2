@@ -4,10 +4,17 @@
 
 # BUILD STAGE
 
-FROM cm2network/steamcmd:root-bullseye as build_stage
+FROM registry.gitlab.steamos.cloud/steamrt/sniper/platform as build_stage
 
 LABEL maintainer="joni@sjostedt.fi"
 
+ARG PUID=1000
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ENV USER steam
+ENV HOMEDIR "/mnt/server"
+ENV STEAMCMDDIR "${HOMEDIR}/steamcmd"
 ENV STEAMAPPID 730
 ENV STEAMAPP cs2
 ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
@@ -19,28 +26,17 @@ COPY etc/pre.sh "/etc/pre.sh"
 COPY etc/post.sh "/etc/post.sh"
 COPY etc/update-gameinfo.sh "/etc/update-gameinfo.sh"
 
-RUN set -x \
-	# Install, update & upgrade packages
-	&& apt-get update \
-	&& apt-get install -y --no-install-recommends --no-install-suggests \
-		wget \
-		ca-certificates \
-		lib32z1 \
-                libicu-dev \
-                unzip \
-                default-libmysqlclient-dev \
-                libssl1.1 \
-	&& mkdir -p "${STEAMAPPDIR}" \
-	# Add entry script
-	&& chmod +x "${HOMEDIR}/entry.sh" \
-	&& chown -R "${USER}:${USER}" "${HOMEDIR}/entry.sh" "${STEAMAPPDIR}" \
-	# Clean up
-        && apt-get clean \
-        && find /var/lib/apt/lists/ -type f -delete
+RUN adduser --disabled-password --gecos "" "${USER}" && \
+    mkdir -p "${STEAMCMDDIR}" && \
+    mkdir -p "${STEAMAPPDIR}" && \
+    chmod +x "${HOMEDIR}/entry.sh" && \
+    curl -fsSL 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar xvzf - -C "${STEAMCMDDIR}" && \
+    chown -R "${USER}:${USER}" "${HOMEDIR}" && \
+    chmod 0777 "${HOMEDIR}"
 
 # BASE
 
-FROM build_stage AS bookworm-base
+FROM build_stage AS steamcmd-base
 
 ENV CS2_SERVERNAME="cs2 private server" \
     CS2_CHEATS=0 \
@@ -71,12 +67,6 @@ ENV CS2_SERVERNAME="cs2 private server" \
     CS2_LOG_DETAIL=0 \
     CS2_LOG_ITEMS=0 \
     CS2_ADDITIONAL_ARGS=""
-
-# Set permissions on STEAMAPPDIR
-#   Permissions may need to be reset if persistent volume mounted
-RUN set -x \
-        && chown -R "${USER}:${USER}" "${STEAMAPPDIR}" \
-        && chmod 0777 "${STEAMAPPDIR}"
 
 # Switch to user
 USER ${USER}
