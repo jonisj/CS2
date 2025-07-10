@@ -20,7 +20,7 @@ Running using a bind mount for data persistence on container recreation:
 $ mkdir -p $(pwd)/cs2-data
 $ chown 1000:1000 $(pwd)/cs2-data # Makes sure the directory is writeable by the unprivileged container user with uid 1000, known as steam
 $ SRCDS_TOKEN="..." # check https://steamcommunity.com/dev/managegameservers
-$ docker run -d --name=cs2 -e SRCDS_TOKEN="$SRCDS_TOKEN" -v $(pwd)/cs2-data:/home/steam/cs2-dedicated/ -p 27015:27015/tcp -p 27015:27015/udp -p 27020:27020/udp joedwards32/cs2
+$ docker run -d --name=cs2 -e SRCDS_TOKEN="$SRCDS_TOKEN" -v $(pwd)/cs2-data:/mnt/server/cs2-dedicated/ -p 27015:27015/tcp -p 27015:27015/udp -p 27020:27020/udp joedwards32/cs2
 ```
 
 or using docker-compose, see [examples](https://github.com/joedwards32/CS2/blob/main/examples/docker-compose.yml):
@@ -41,7 +41,7 @@ Minimum system requirements are:
 
 * 2 CPUs
 * 2GiB RAM
-* 40GB of disk space for the container or mounted as a persistent volume on `/home/steam/cs2-dedicated/`
+* 40GB of disk space for the container or mounted as a persistent volume on `/mnt/server/cs2-dedicated/`
 
 ## Environment Variables
 Feel free to overwrite these environment variables, using -e (--env): 
@@ -138,22 +138,22 @@ STEAMAPPVALIDATE=0          (0=skip validation, 1=validate game files)
 
 The container includes two scripts for executing custom actions:
 
-* `/home/steam/cs2-dedicated/pre.sh` is executed before the CS2 server starts
-* `/home/steam/cs2-dedicated/post.sh` is executed after the CS2 server stops
+* `/mnt/server/cs2-dedicated/pre.sh` is executed before the CS2 server starts
+* `/mnt/server/cs2-dedicated/post.sh` is executed after the CS2 server stops
 
-When using a persient volume mounted at `/home/steam/cs2-dedicated/` you may edit these scripts to perform custom actions, such as enabling metamod.
+When using a persient volume mounted at `/mnt/server/cs2-dedicated/` you may edit these scripts to perform custom actions, such as enabling metamod.
 
 Alternatively, you may have docker mount files from outside the container to override these files. E.g.:
 
 ```
--v /path/to/pre.sh:/home/steam/cs2-dedicated/pre.sh
+-v /path/to/pre.sh:/mnt/server/cs2-dedicated/pre.sh
 ```
 
 ## Overriding Game Mode Defaults
 
-The default configurations for each game mode are stored in `/home/steam/cs2-dedicated/game/csgo/cfg/`. For example, the Competitive mode defaults are set by `gamemode_competitive.cfg`.
+The default configurations for each game mode are stored in `/mnt/server/cs2-dedicated/game/csgo/cfg/`. For example, the Competitive mode defaults are set by `gamemode_competitive.cfg`.
 
-When using a persistent volume mounted at `/home/steam/cs2-dedicated/`, these defaults can be overridden by adding your own settings to `gamemode_competitive_server.cfg`.
+When using a persistent volume mounted at `/mnt/server/cs2-dedicated/`, these defaults can be overridden by adding your own settings to `gamemode_competitive_server.cfg`.
 
 ```
 // Game Mode Competitive Server Overrides 
