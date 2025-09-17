@@ -11,7 +11,7 @@ if [ ! -f "${GAMEINFO_FILE}" ]; then
     exit 1
 fi
 
-NEW_ENTRY="            Game    csgo/addons/metamod"
+NEW_ENTRY="			Game    csgo/addons/metamod"
 
 if grep -Fxq "$NEW_ENTRY" "$GAMEINFO_FILE"; then
     echo "The entry '$NEW_ENTRY' already exists in ${GAMEINFO_FILE}. No changes were made."

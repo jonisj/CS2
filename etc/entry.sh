@@ -119,8 +119,7 @@ fi
 # Start Server
 
 echo "Starting CS2 Dedicated Server"
-eval "./cs2.sh" --graphics-provider "\"\"" -- \
-        -dedicated \
+eval "./cs2.sh" -dedicated \
         "${CS2_IP_ARGS}" -port "${CS2_PORT}" \
         -console \
         -usercon \
