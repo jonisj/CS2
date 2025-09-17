@@ -8,23 +8,18 @@ FROM registry.gitlab.steamos.cloud/steamrt/sniper/platform as build_stage
 
 LABEL maintainer="joni@sjostedt.fi"
 
-ARG PUID=1000
-
 ENV DEBIAN_FRONTEND=noninteractive
-
-ENV USER steam
-ENV HOMEDIR "/mnt/server"
-ENV STEAMCMDDIR "${HOMEDIR}/steamcmd"
-ENV STEAMAPPID 730
-ENV STEAMAPP cs2
-ENV STEAMAPPDIR "${HOMEDIR}/${STEAMAPP}-dedicated"
-ENV STEAMAPPVALIDATE 0
+ENV USER=steam
+ENV HOMEDIR="/mnt/server"
+ENV HOME="${HOMEDIR}"
+ENV STEAMCMDDIR="${HOMEDIR}/steamcmd"
+ENV STEAMAPPID=730
+ENV STEAMAPP=cs2
+ENV STEAMAPPDIR="${HOMEDIR}/${STEAMAPP}-dedicated"
+ENV STEAMAPPVALIDATE=0
 
 COPY etc/entry.sh "${HOMEDIR}/entry.sh"
-COPY etc/server.cfg "/etc/server.cfg"
-COPY etc/pre.sh "/etc/pre.sh"
-COPY etc/post.sh "/etc/post.sh"
-COPY etc/update-gameinfo.sh "/etc/update-gameinfo.sh"
+COPY etc/* /etc
 
 RUN adduser --disabled-password --gecos "" "${USER}" && \
     mkdir -p "${STEAMCMDDIR}" && \

@@ -16,9 +16,13 @@ eval bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
 				+app_update "${STEAMAPPID}" "${VALIDATE}"\
 				+quit
 
-# steamclient.so fix
-mkdir -p ~/.steam/sdk64
-ln -sfT ${STEAMCMDDIR}/linux64/steamclient.so ~/.steam/sdk64/steamclient.so
+# hacky error fix
+mkdir -p ${HOMEDIR}/.steam/sdk32
+mkdir -p ${HOMEDIR}/.steam/sdk64
+rm ${HOMEDIR}/.steam/sdk32/steamclient.so
+rm ${HOMEDIR}/.steam/sdk64/steamclient.so
+cp ${STEAMCMDDIR}/linux32/steamclient.so ${HOMEDIR}/.steam/sdk32/steamclient.so
+cp ${STEAMCMDDIR}/linux64/steamclient.so ${HOMEDIR}/.steam/sdk64/steamclient.so
 
 # Install server.cfg
 mkdir -p $STEAMAPPDIR/game/csgo/cfg
