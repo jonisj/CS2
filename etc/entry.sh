@@ -20,10 +20,6 @@ eval bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
 mkdir -p ~/.steam/sdk64
 ln -sfT ${STEAMCMDDIR}/linux64/steamclient.so ~/.steam/sdk64/steamclient.so
 
-# libserver.so fix 09.2025
-mkdir -p ${STEAMAPPDIR}/game/bin/linuxsteamrt64
-ln -sfT ${STEAMAPPDIR}/game/csgo/bin/linuxsteamrt64/libserver.so ${STEAMAPPDIR}/game/bin/linuxsteamrt64/libserver.so
-
 # Install server.cfg
 mkdir -p $STEAMAPPDIR/game/csgo/cfg
 cp /etc/server.cfg "${STEAMAPPDIR}"/game/csgo/cfg/server.cfg
@@ -76,7 +72,7 @@ if [[ ! -z $CS2_BOT_QUOTA_MODE ]] ; then
 fi
 
 # Switch to server directory
-cd "${STEAMAPPDIR}/game/bin/linuxsteamrt64"
+cd "${STEAMAPPDIR}/game"
 
 # Pre Hook
 source "${STEAMAPPDIR}/pre.sh"
@@ -123,7 +119,7 @@ fi
 # Start Server
 
 echo "Starting CS2 Dedicated Server"
-eval "./cs2" --graphics-provider \"\" -- \
+eval "./cs2.sh" --graphics-provider "\"\"" -- \
         -dedicated \
         "${CS2_IP_ARGS}" -port "${CS2_PORT}" \
         -console \
