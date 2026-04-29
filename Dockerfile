@@ -43,11 +43,7 @@ ENV STEAMAPPDIR="${HOMEDIR}/${STEAMAPP}-dedicated"
 ENV STEAMAPPVALIDATE=0
 
 COPY etc/entry.sh "${HOMEDIR}/entry.sh"
-COPY etc/server.cfg "/etc/server.cfg"
-COPY etc/pre.sh "/etc/pre.sh"
-COPY etc/post.sh "/etc/post.sh"
-COPY etc/server.cfg "/etc/server.cfg"
-COPY etc/update-gameinfo.sh "/etc/update-gameinfo.sh"
+COPY etc/server.cfg etc/pre.sh etc/post.sh etc/server.cfg etc/update-gameinfo.sh "/etc"
 
 ENV CS2_SERVERNAME="cs2 private server" \
     CS2_CHEATS=0 \
@@ -78,7 +74,7 @@ ENV CS2_SERVERNAME="cs2 private server" \
     CS2_LOG_DETAIL=0 \
     CS2_LOG_ITEMS=0 \
     CS2_DISCONNECT_KILLS=0 \
-        CS2_LOG_HTTP_URL="" \
+    CS2_LOG_HTTP_URL="" \
     CS2_ADDITIONAL_ARGS=""
 
 # Set permissions on STEAMAPPDIR
