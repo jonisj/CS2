@@ -1,28 +1,61 @@
 #!/bin/bash
 
+# Debug
+
+## Steamcmd debugging
+if [[ $DEBUG -eq 1 ]] || [[ $DEBUG -eq 3 ]]; then
+    STEAMCMD_SPEW="+set_spew_level 4 4"
+fi
+## CS2 server debugging
+if [[ $DEBUG -eq 2 ]] || [[ $DEBUG -eq 3 ]]; then
+    CS2_LOG="on"
+    CS2_LOG_FILE=1
+    CS2_LOG_MONEY=1
+    CS2_LOG_DETAIL=3
+    CS2_LOG_ITEMS=1
+fi
+
 # Create App Dir
 mkdir -p "${STEAMAPPDIR}" || true
 
 # Download Updates
-
 if [[ "$STEAMAPPVALIDATE" -eq 1 ]]; then
     VALIDATE="validate"
 else
     VALIDATE=""
 fi
 
-eval bash "${STEAMCMDDIR}/steamcmd.sh" +force_install_dir "${STEAMAPPDIR}" \
-				+login anonymous \
-				+app_update "${STEAMAPPID}" "${VALIDATE}"\
-				+quit
+## SteamCMD can fail to download
+## Retry logic
+MAX_ATTEMPTS=3
+attempt=0
+steamcmd_rc=1
+while [[ $steamcmd_rc != 0 ]] && [[ $attempt -lt $MAX_ATTEMPTS ]]; do
+    ((attempt+=1))
+    if [[ $attempt -gt 1 ]]; then
+        echo "Retrying SteamCMD, attempt ${attempt}"
+        # Stale appmanifest data can lead for HTTP 401 errors when requesting old
+        # files from SteamPipe CDN
+        echo "Removing steamapps (appmanifest data)..."
+        rm -rf "${STEAMAPPDIR}/steamapps"
+    fi
+    eval bash "${STEAMCMDDIR}/steamcmd.sh" "${STEAMCMD_SPEW}" \
+                                +force_install_dir "${STEAMAPPDIR}" \
+                                +@bClientTryRequestManifestWithoutCode 1 \
+                                +login anonymous \
+                                +app_update "${STEAMAPPID}" "${VALIDATE}" \
+                                +quit
+    steamcmd_rc=$?
+done
 
-# hacky error fix
-mkdir -p ${HOMEDIR}/.steam/sdk32
-mkdir -p ${HOMEDIR}/.steam/sdk64
-rm ${HOMEDIR}/.steam/sdk32/steamclient.so
-rm ${HOMEDIR}/.steam/sdk64/steamclient.so
-cp ${STEAMCMDDIR}/linux32/steamclient.so ${HOMEDIR}/.steam/sdk32/steamclient.so
-cp ${STEAMCMDDIR}/linux64/steamclient.so ${HOMEDIR}/.steam/sdk64/steamclient.so
+## Exit if steamcmd fails
+if [[ $steamcmd_rc != 0 ]]; then
+    exit $steamcmd_rc
+fi
+
+# FIX: steamclient.so fix
+mkdir -p ~/.steam/sdk64
+ln -sfT ${STEAMCMDDIR}/linux64/steamclient.so ~/.steam/sdk64/steamclient.so
 
 # Install server.cfg
 mkdir -p $STEAMAPPDIR/game/csgo/cfg
@@ -34,15 +67,6 @@ if [[ ! -f "${STEAMAPPDIR}/pre.sh" ]] ; then
 fi
 if [[ ! -f "${STEAMAPPDIR}/post.sh" ]] ; then
     cp /etc/post.sh "${STEAMAPPDIR}/post.sh"
-fi
-if [[ ! -f "${STEAMAPPDIR}/update-gameinfo.sh" ]] ; then
-    cp /etc/update-gameinfo.sh "${STEAMAPPDIR}/update-gameinfo.sh"
-fi
-
-# Download and extract custom config bundle
-if [[ ! -z $CS2_CFG_URL ]]; then
-    echo "Downloading config pack from ${CS2_CFG_URL}"
-    wget -qO- "${CS2_CFG_URL}" | tar xvzf - -C "${STEAMAPPDIR}"
 fi
 
 # Rewrite Config Files
@@ -60,29 +84,43 @@ sed -i -e "s/{{SERVER_HOSTNAME}}/${CS2_SERVERNAME}/g" \
        -e "s/{{TV_MAXRATE}}/${TV_MAXRATE}/g" \
        -e "s/{{TV_DELAY}}/${TV_DELAY}/g" \
        -e "s/{{SERVER_LOG}}/${CS2_LOG}/g" \
+       -e "s/{{SERVER_LOG_FILE}}/${CS2_LOG_FILE}/g" \
+       -e "s/{{SERVER_LOG_ECHO}}/${CS2_LOG_ECHO}/g" \
        -e "s/{{SERVER_LOG_MONEY}}/${CS2_LOG_MONEY}/g" \
        -e "s/{{SERVER_LOG_DETAIL}}/${CS2_LOG_DETAIL}/g" \
        -e "s/{{SERVER_LOG_ITEMS}}/${CS2_LOG_ITEMS}/g" \
+       -e "s/{{SERVER_DISCONNECT_KILLS}}/${CS2_DISCONNECT_KILLS}/g" \
        "${STEAMAPPDIR}"/game/csgo/cfg/server.cfg
+
+if [[ ! -z $CS2_LOG_HTTP_URL ]]; then
+    printf 'logaddress_add_http "%s"\n' "${CS2_LOG_HTTP_URL}" >> "${STEAMAPPDIR}"/game/csgo/cfg/server.cfg
+fi
 
 if [[ ! -z $CS2_BOT_DIFFICULTY ]] ; then
     sed -i "s/bot_difficulty.*/bot_difficulty ${CS2_BOT_DIFFICULTY}/" "${STEAMAPPDIR}"/game/csgo/cfg/*
 fi
 if [[ ! -z $CS2_BOT_QUOTA ]] ; then
-    sed -i "s/bot_quota.*/bot_quota ${CS2_BOT_QUOTA}/" "${STEAMAPPDIR}"/game/csgo/cfg/*
+    sed -ri "s/bot_quota[[:space:]]+.*/bot_quota ${CS2_BOT_QUOTA}/" "${STEAMAPPDIR}"/game/csgo/cfg/*
 fi
 if [[ ! -z $CS2_BOT_QUOTA_MODE ]] ; then
     sed -i "s/bot_quota_mode.*/bot_quota_mode ${CS2_BOT_QUOTA_MODE}/" "${STEAMAPPDIR}"/game/csgo/cfg/*
 fi
 
+# Rewrite tv_delay in all gamemode_*.cfg files
+if [[ -n "$TV_DELAY" ]]; then
+    for f in "${STEAMAPPDIR}"/game/csgo/cfg/gamemode_*.cfg; do
+        [[ -e "$f" ]] || continue
+        grep -q "^tv_delay" "$f" \
+            && sed -i "s/^tv_delay.*/tv_delay ${TV_DELAY}/" "$f" \
+            || echo "tv_delay ${TV_DELAY}" >> "$f"
+    done
+fi
+
 # Switch to server directory
-cd "${STEAMAPPDIR}/game"
+cd "${STEAMAPPDIR}/game/"
 
 # Pre Hook
 source "${STEAMAPPDIR}/pre.sh"
-
-# Update gameinfo.gi
-bash "${STEAMAPPDIR}/update-gameinfo.sh"
 
 # Construct server arguments
 
@@ -120,6 +158,10 @@ if [[ ! -z $CS2_HOST_WORKSHOP_MAP ]]; then
     CS2_HOST_WORKSHOP_MAP_ARGS="+host_workshop_map ${CS2_HOST_WORKSHOP_MAP}"
 fi
 
+if [[ ! -z $CS2_PW ]]; then
+    CS2_PW_ARGS="+sv_password ${CS2_PW}"
+fi
+
 # Start Server
 
 echo "Starting CS2 Dedicated Server"
@@ -136,7 +178,7 @@ eval "./cs2.sh" -dedicated \
         "${CS2_MP_MATCH_END_CHANGELEVEL}" \
         +rcon_password "${CS2_RCONPW}" \
         "${SV_SETSTEAMACCOUNT_ARGS}" \
-        +sv_password "${CS2_PW}" \
+        "${CS2_PW_ARGS}" \
         +sv_lan "${CS2_LAN}" \
         +tv_port "${TV_PORT}" \
         "${CS2_ADDITIONAL_ARGS}"

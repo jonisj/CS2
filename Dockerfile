@@ -2,47 +2,62 @@
 # Dockerfile that builds a CS2 Gameserver
 ###########################################################
 
-# BUILD STAGE
 
-FROM registry.gitlab.steamos.cloud/steamrt/sniper/platform as build_stage
+# Global ARGs
+ARG PUID=1000
+ARG PGID=1000
+ARG USER=steam
+ARG HOMEDIR="/home/steam"
+ARG STEAMCMDDIR="${HOMEDIR}/steamcmd"
+
+# SteamCMD Stage
+FROM registry.gitlab.steamos.cloud/steamrt/sniper/platform AS steamcmd
 
 LABEL maintainer="joni@sjostedt.fi"
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV USER=steam
-ENV HOMEDIR="/mnt/server"
-ENV HOME="${HOMEDIR}"
-ENV STEAMCMDDIR="${HOMEDIR}/steamcmd"
+ARG PUID
+ARG PGID
+ARG USER
+ARG HOMEDIR
+ARG STEAMCMDDIR
+
+RUN useradd -u "${PUID}" -m "${USER}" && \
+    mkdir -p "${STEAMCMDDIR}" && \
+    chown -R "${PUID}:${PGID}" "${HOMEDIR}" && \
+    su "${USER}" -c \
+        "curl -fsSL 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar xvzf - -C \"${STEAMCMDDIR}\" && \"./${STEAMCMDDIR}/steamcmd.sh\" +quit "
+
+# CS2
+FROM steamcmd AS cs2
+
+ARG PUID
+ARG PGID
+ARG USER
+ARG HOMEDIR
+ARG STEAMCMDDIR
+
 ENV STEAMAPPID=730
 ENV STEAMAPP=cs2
+ENV STEAMCMDDIR="${STEAMCMDDIR}"
 ENV STEAMAPPDIR="${HOMEDIR}/${STEAMAPP}-dedicated"
 ENV STEAMAPPVALIDATE=0
 
 COPY etc/entry.sh "${HOMEDIR}/entry.sh"
-COPY etc/* /etc
-
-RUN adduser --disabled-password --gecos "" "${USER}" && \
-    mkdir -p "${STEAMCMDDIR}" && \
-    mkdir -p "${STEAMAPPDIR}" && \
-    chmod +x "${HOMEDIR}/entry.sh" && \
-    curl -fsSL 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz' | tar xvzf - -C "${STEAMCMDDIR}" && \
-    chown -R "${USER}:${USER}" "${HOMEDIR}" && \
-    chmod 0777 "${HOMEDIR}"
-
-# BASE
-
-FROM build_stage AS steamcmd-base
+COPY etc/server.cfg "/etc/server.cfg"
+COPY etc/pre.sh "/etc/pre.sh"
+COPY etc/post.sh "/etc/post.sh"
+COPY etc/server.cfg "/etc/server.cfg"
+COPY etc/update-gameinfo.sh "/etc/update-gameinfo.sh"
 
 ENV CS2_SERVERNAME="cs2 private server" \
     CS2_CHEATS=0 \
     CS2_IP=0.0.0.0 \
     CS2_SERVER_HIBERNATE=0 \
     CS2_PORT=27015 \
-    CS2_RCON_PORT="" \
     CS2_MAXPLAYERS=10 \
     CS2_RCONPW="changeme" \
     CS2_PW="changeme" \
-    CS2_MAPGROUP="mg_active" \    
+    CS2_MAPGROUP="mg_active" \
     CS2_STARTMAP="de_inferno" \
     CS2_GAMEALIAS="" \
     CS2_GAMETYPE=0 \
@@ -56,15 +71,26 @@ ENV CS2_SERVERNAME="cs2 private server" \
     TV_MAXRATE=0 \
     TV_DELAY=0 \
     SRCDS_TOKEN="" \
-    CS2_CFG_URL="" \
     CS2_LOG="on" \
+    CS2_LOG_FILE=0 \
+    CS2_LOG_ECHO=0 \
     CS2_LOG_MONEY=0 \
     CS2_LOG_DETAIL=0 \
     CS2_LOG_ITEMS=0 \
+    CS2_DISCONNECT_KILLS=0 \
+        CS2_LOG_HTTP_URL="" \
     CS2_ADDITIONAL_ARGS=""
 
+# Set permissions on STEAMAPPDIR
+#   Permissions may need to be reset if persistent volume mounted
+RUN set -x \
+	&& mkdir -p "${STEAMAPPDIR}" \
+	&& chmod +x "${HOMEDIR}/entry.sh" \
+        && chown -R "${PUID}:${PGID}" "${STEAMAPPDIR}" \
+        && chmod 0777 "${STEAMAPPDIR}"
+
 # Switch to user
-USER ${USER}
+USER ${PUID}:${PGID}
 
 WORKDIR ${HOMEDIR}
 
